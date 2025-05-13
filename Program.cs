@@ -1,18 +1,19 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// Óñòàíàâëèâàåì ÿâíûé URL
+// Устанавливаем явный URL
 builder.WebHost.UseUrls("http://0.0.0.0:5020");
 
 builder.Services.AddControllers();
 
-// Ëîãèðîâàíèå
+// Логирование
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 var app = builder.Build();
 
-// Îáðàáîòêà HTTP-çàïðîñîâ
+// Обработка HTTP-запросов
 app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
