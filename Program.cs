@@ -1,17 +1,17 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// Устанавливаем явный URL
+// Г“Г±ГІГ Г­Г ГўГ«ГЁГўГ ГҐГ¬ ГїГўГ­Г»Г© URL
 builder.WebHost.UseUrls("http://0.0.0.0:5020");
 
 builder.Services.AddControllers();
 
-// Логирование
+// Г‹Г®ГЈГЁГ°Г®ГўГ Г­ГЁГҐ
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 var app = builder.Build();
 
-// Обработка HTTP-запросов
+// ГЋГЎГ°Г ГЎГ®ГІГЄГ  HTTP-Г§Г ГЇГ°Г®Г±Г®Гў
 app.UseAuthorization();
 app.MapControllers();
 
