@@ -3,70 +3,70 @@ using System.Text.Json;
 
 namespace File.Controllers
 {
-    // API-контроллер 
+    // API-РєРѕРЅС‚СЂРѕР»Р»РµСЂ 
     [ApiController]
-    [Route("{**filepath}")] // filepath — это универсальный шаблон маршрута для обработки вложенных путей
+    [Route("{**filepath}")] // filepath вЂ” СЌС‚Рѕ СѓРЅРёРІРµСЂСЃР°Р»СЊРЅС‹Р№ С€Р°Р±Р»РѕРЅ РјР°СЂС€СЂСѓС‚Р° РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё РІР»РѕР¶РµРЅРЅС‹С… РїСѓС‚РµР№
     public class FilesController : ControllerBase
     {
-        // Поля для хранения корневой папки файлов
+        // РџРѕР»СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РєРѕСЂРЅРµРІРѕР№ РїР°РїРєРё С„Р°Р№Р»РѕРІ
         private readonly string storageRoot;
         private readonly string logFile;
         private readonly ILogger<FilesController> logger;
 
-        // Конструктор
+        // РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ
         public FilesController(IConfiguration config, ILogger<FilesController> logger)
         {
-            // Определение пути к хранилищу
+            // РћРїСЂРµРґРµР»РµРЅРёРµ РїСѓС‚Рё Рє С…СЂР°РЅРёР»РёС‰Сѓ
             var path = config["FileStorage"] ?? Environment.GetEnvironmentVariable("STORAGE_PATH") ?? "FileStorage";
             storageRoot = Path.Combine(Directory.GetCurrentDirectory(), path);
             logFile = Path.Combine(Directory.GetCurrentDirectory(), "Logs", "log.txt");
 
-            // Создание директорий, если они не существуют
+            // РЎРѕР·РґР°РЅРёРµ РґРёСЂРµРєС‚РѕСЂРёР№, РµСЃР»Рё РѕРЅРё РЅРµ СЃСѓС‰РµСЃС‚РІСѓСЋС‚
             Directory.CreateDirectory(storageRoot);
             Directory.CreateDirectory(Path.GetDirectoryName(logFile)!);
 
             this.logger = logger;
         }
 
-        // Обработка PUT-запроса
+        // РћР±СЂР°Р±РѕС‚РєР° PUT-Р·Р°РїСЂРѕСЃР°
         [HttpPut]
         public async Task<IActionResult> UploadFile(string filepath)
         {
-            // Преобразование URL-пути в путь на диске
+            // РџСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ URL-РїСѓС‚Рё РІ РїСѓС‚СЊ РЅР° РґРёСЃРєРµ
             string fullPath = Path.Combine(storageRoot, filepath.Replace("/", Path.DirectorySeparatorChar.ToString()));
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
 
-                // Копирование содержимого запроса в файл
+                // РљРѕРїРёСЂРѕРІР°РЅРёРµ СЃРѕРґРµСЂР¶РёРјРѕРіРѕ Р·Р°РїСЂРѕСЃР° РІ С„Р°Р№Р»
                 using (var fileStream = new FileStream(fullPath, FileMode.Create))
                 {
                     await Request.Body.CopyToAsync(fileStream);
                 }
 
                 Log("PUT", filepath);
-                return Ok("Файл загружен");
+                return Ok("Р¤Р°Р№Р» Р·Р°РіСЂСѓР¶РµРЅ");
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Ошибка при загрузке файла");
-                return StatusCode(500, "Ошибка сервера");
+                logger.LogError(ex, "РћС€РёР±РєР° РїСЂРё Р·Р°РіСЂСѓР·РєРµ С„Р°Р№Р»Р°");
+                return StatusCode(500, "РћС€РёР±РєР° СЃРµСЂРІРµСЂР°");
             }
         }
 
-        // Обработка GET-запроса
+        // РћР±СЂР°Р±РѕС‚РєР° GET-Р·Р°РїСЂРѕСЃР°
         [HttpGet]
         public IActionResult GetFileOrDirectory(string filepath)
         {
             string fullPath = Path.Combine(storageRoot, filepath.Replace("/", Path.DirectorySeparatorChar.ToString()));
 
-            // Если файл существует — отдать файл
+            // Р•СЃР»Рё С„Р°Р№Р» СЃСѓС‰РµСЃС‚РІСѓРµС‚ вЂ” РѕС‚РґР°С‚СЊ С„Р°Р№Р»
             if (System.IO.File.Exists(fullPath))
             {
                 Log("GET", filepath);
                 return PhysicalFile(fullPath, "application/octet-stream");
             }
-            // Если это директория — отдать список файлов
+            // Р•СЃР»Рё СЌС‚Рѕ РґРёСЂРµРєС‚РѕСЂРёСЏ вЂ” РѕС‚РґР°С‚СЊ СЃРїРёСЃРѕРє С„Р°Р№Р»РѕРІ
             else if (Directory.Exists(fullPath))
             {
                 var files = Directory.GetFiles(fullPath).Select(Path.GetFileName).ToArray();
@@ -74,21 +74,21 @@ namespace File.Controllers
                 return Ok(JsonSerializer.Serialize(files));
             }
 
-            // Если ничего не найдено — 404
+            // Р•СЃР»Рё РЅРёС‡РµРіРѕ РЅРµ РЅР°Р№РґРµРЅРѕ вЂ” 404
             return NotFound();
         }
 
-        // Обработка HEAD-запроса
+        // РћР±СЂР°Р±РѕС‚РєР° HEAD-Р·Р°РїСЂРѕСЃР°
         [HttpHead]
         public IActionResult GetFileInfo(string filepath)
         {
             string fullPath = Path.Combine(storageRoot, filepath.Replace("/", Path.DirectorySeparatorChar.ToString()));
 
-            // Если файл не найден — 404
+            // Р•СЃР»Рё С„Р°Р№Р» РЅРµ РЅР°Р№РґРµРЅ вЂ” 404
             if (!System.IO.File.Exists(fullPath))
                 return NotFound();
 
-            // Получение информации о файле и добавление в заголовки ответа
+            // РџРѕР»СѓС‡РµРЅРёРµ РёРЅС„РѕСЂРјР°С†РёРё Рѕ С„Р°Р№Р»Рµ Рё РґРѕР±Р°РІР»РµРЅРёРµ РІ Р·Р°РіРѕР»РѕРІРєРё РѕС‚РІРµС‚Р°
             var fileInfo = new FileInfo(fullPath);
             Response.Headers["File-Size"] = fileInfo.Length.ToString();
             Response.Headers["Last-Modified"] = fileInfo.LastWriteTimeUtc.ToString("R");
@@ -97,32 +97,32 @@ namespace File.Controllers
             return Ok();
         }
 
-        // Обработка DELETE-запроса
+        // РћР±СЂР°Р±РѕС‚РєР° DELETE-Р·Р°РїСЂРѕСЃР°
         [HttpDelete]
         public IActionResult DeleteFileOrDirectory(string filepath)
         {
             string fullPath = Path.Combine(storageRoot, filepath.Replace("/", Path.DirectorySeparatorChar.ToString()));
 
-            // Удаление файла
+            // РЈРґР°Р»РµРЅРёРµ С„Р°Р№Р»Р°
             if (System.IO.File.Exists(fullPath))
             {
                 System.IO.File.Delete(fullPath);
                 Log("DELETE-FILE", filepath);
-                return Ok("Файл удалён");
+                return Ok("Р¤Р°Р№Р» СѓРґР°Р»С‘РЅ");
             }
-            // Удаление директории рекурсивно
+            // РЈРґР°Р»РµРЅРёРµ РґРёСЂРµРєС‚РѕСЂРёРё СЂРµРєСѓСЂСЃРёРІРЅРѕ
             else if (Directory.Exists(fullPath))
             {
                 Directory.Delete(fullPath, true);
                 Log("DELETE-DIR", filepath);
-                return Ok("Каталог удалён");
+                return Ok("РљР°С‚Р°Р»РѕРі СѓРґР°Р»С‘РЅ");
             }
 
-            // Если не найдено — 404
+            // Р•СЃР»Рё РЅРµ РЅР°Р№РґРµРЅРѕ вЂ” 404
             return NotFound();
         }
 
-        // Метод логирования действий
+        // РњРµС‚РѕРґ Р»РѕРіРёСЂРѕРІР°РЅРёСЏ РґРµР№СЃС‚РІРёР№
         private void Log(string method, string path)
         {
             string logEntry = $"[{DateTime.UtcNow:u}] {method} {path}";
