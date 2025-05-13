@@ -1,7 +1,7 @@
 var builder = WebApplication.CreateBuilder(args);
 
 // Устанавливаем явный URL
-builder.WebHost.UseUrls("http://0.0.0.0:5020");
+builder.WebHost.UseUrls("http://127.0.0.2:5020");
 
 builder.Services.AddControllers();
 
