@@ -122,7 +122,7 @@ namespace File.Controllers
             return NotFound();
         }
 
-        // Метод логирования действий
+        // Логирование действий
         private void Log(string method, string path)
         {
             string logEntry = $"[{DateTime.UtcNow:u}] {method} {path}";
